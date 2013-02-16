@@ -145,7 +145,10 @@ class myPanel(wx.Panel):
         self.grid=RegisterGrid(self,pos=(160,10),size=(430,430))
         self.grid.Bind(wxGrid.EVT_GRID_CMD_SELECT_CELL,self.gridOnCellLeftClick)
         self.hasGridQuery=0
+        self.ackOK=0
         self.gridQueryAck=""
+        self.page=self.RegPageComboBox.GetValue()
+        self.registerIndex=self.grid.labelList[self.grid.lastClickRow]+self.grid.labelList[self.grid.lastClickCol]
 
         self.grid.Bind(wx.EVT_KEY_DOWN,self.gridOnKeyDown)
         self.grid.Bind(wx.EVT_KEY_UP,self.gridOnKeyUp)
@@ -215,11 +218,43 @@ class myPanel(wx.Panel):
 
     def OnSerialRead(self, event):
         """Handle input from the serial port."""
-        text = event.data
+        text = event.data.replace("\r\n","\n")
+        self.logger.AppendText(text)
         #text = ''.join([(c >= ' ') and c or '<%d>' % ord(c)  for c in text])
         if self.hasGridQuery==1:
+            self.page=self.RegPageComboBox.GetValue()
+            self.registerIndex=self.grid.labelList[self.grid.lastClickRow]+self.grid.labelList[self.grid.lastClickCol]
             self.gridQueryAck += text
-        self.logger.AppendText(text)
+            tempstr=self.gridQueryAck
+            if tempstr[-1]!="\n":
+                pass
+            else:
+                print("Debug: tempstr=" + tempstr)
+                for ack in tempstr.strip('\n').split("\n"):
+                    print("Debug: ack: " + ack + "\n")
+                    # ack format: W=FF 02
+                    # ack format: R=00 01
+
+                    #print("Debug: ack vs format: " +"*" + ack + "*"+ "W=FF 0"+self.page+"*")
+                    if ack[:7] == "W=FF 0"+self.page:
+                        print("Debug: get FF\n")
+                        self.ackOK=1
+                        continue
+                    #print("Debug: ack vs format: " +"*" + ack[:5] + "*"+ "R="+self.registerIndex+" "+"*")
+                    if ack[:5] == "R="+self.registerIndex+" " and self.ackOK==1:
+                        print("Debug: get register value\n")
+                        self.grid.SetCellValue(self.grid.lastClickRow,self.grid.lastClickCol,ack[5:])
+                        self.ackOK=0
+                        self.hasGridQuery=0
+                        self.gridQueryAck=""
+                        break
+            if len(tempstr)>100:
+                self.hasGridQuery=0
+                self.gridQueryAck=""
+                self.ackOK=0
+                self.logger.AppendText("Error: grid ask data timeout")
+                self.grid.SetCellValue(self.grid.lastClickRow,self.grid.lastClickRow,"XX")
+
 
     def ComPortThread(self):
         """Thread that handles the incomming traffic. Does the basic input
@@ -261,7 +296,9 @@ class myPanel(wx.Panel):
         self.logger.Clear()
         evt.Skip()
     def cmdSend(self,evt):
-        pass
+        if self.serialControlButton.GetLabel()=="Close":
+            cmdstring=self.cmdBuffer.GetValue().replace('\n',"\r\n")
+            self.serial.write(cmdstring)
 
 
     def gridOnCellLeftClick(self,evt):
@@ -271,35 +308,16 @@ class myPanel(wx.Panel):
             page=self.RegPageComboBox.GetValue()
             # get register index
             registerIndex=self.grid.labelList[evt.GetRow()]+self.grid.labelList[evt.GetCol()]
+            self.grid.SetCellValue(evt.GetRow(),evt.GetCol(),"")
             # serial send
             cmdStr="wFF0"+page+"\r\n"+"r"+registerIndex+"\r\n"
             self.logger.AppendText("grid Send: \n" +cmdStr)
             self.serial.write(cmdStr)
-            self.hasGridQuery=1
-            count=3
-            ackOK=0
-            while count > 0:
-                count -= 1
-                tempstr=self.gridQueryAck
-                if len(tempstr)< 2*9 or tempstr[-2:]!="\r\n":
-                    time.sleep(1)
-                    continue
-                for ack in tempstr.split("\r\n"):
-                    # ack format: W FF=02
-                    # ack format: R 00=01
-                    if ack == "W FF=0"+page:
-                        ackOK=1
-                        continue
-                    if ack[:5] == "R "+registerIndex+"=" and ackOK==1:
-                        self.grid.SetCellValue(evt.GetRow(),evt.GetCol(),ack[6:])
-                        count=-1
-                        ackOK=0
-                        self.hasGridQuery=0
-                        self.gridQueryAck=""
-                        break
-            if count==0:
-                self.logger.AppendText("Error: grid ask data timeout")
-                self.grid.SetCellValue(evt.GetRow(),evt.GetCol(),"XX")
+            if self.hasGridQuery ==0:
+                self.hasGridQuery=1
+            else:
+                self.logger.AppendText("Error: last click no ack")
+                self.gridQueryAck=""
         evt.Skip()
 
     def writeRegister(self,regStr,value):
@@ -370,7 +388,7 @@ def getAvailablePorts():
         import scanwin32
         portsList=[]
         for order,port,desc,hwid in sorted(scanwin32.comports()):
-            portsList.Append(str(port))
+            portsList.append(str(port))
         return portsList
         
 if __name__ == "__main__":
