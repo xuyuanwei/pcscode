@@ -82,36 +82,6 @@ class RegisterGrid(wxGrid.Grid):
         evt.Skip()
 
 
-        '''
-    def OnKeyDown(self,evt):
-        print("Key Down captured: "+ str(evt.GetKeyCode()))
-        if(evt.GetKeyCode()==61):   # KEY: =
-            self.EnableEditing(False)
-            if(evt.ControlDown()):
-                print("Ctrl + =")
-            else:
-                print("=")
-        if(evt.GetKeyCode()==45):   # KEY: -
-            self.EnableEditing(False)
-            if(evt.ControlDown()):
-                print("Ctrl + -")
-            else:
-                print("-")
-        #self.EnableEditing(True)
-        evt.Skip()
-
-    def OnKeyUp(self,evt):
-        print("Key Up captured: "+ str(evt.GetKeyCode()))
-        if(evt.GetKeyCode()==61 or evt.GetKeyCode()==45):
-            self.EnableEditing(False)
-            self.SetCellValue(self.lastClickRow,self.lastClickCol,self.GetCellValue(self.lastClickRow,self.lastClickCol)[:2])
-        else:
-            self.EnableEditing(True)
-        evt.Skip()
-            '''
-
-
-            
 
 class myPanel(wx.Panel):
     def __init__(self,parent,ser):
@@ -119,7 +89,9 @@ class myPanel(wx.Panel):
         # Serial Port part
         self.serial=ser
         self.thread=None
+        self.threadSerialSend=None
         self.alive=threading.Event()
+        #self.serialSendAlive=threading.Event()
         self.Bind(EVT_SERIALRX, self.OnSerialRead)
         self.cmdBufferLen=256
         self.cmdBuffer=['']*self.cmdBufferLen
@@ -127,6 +99,9 @@ class myPanel(wx.Panel):
         self.cmdBufferPopIndex=0
         self.cmdBufferPopIndexLast=-1
         self.cmdBufferPopIndexLastCount=0
+        self.serialSendRepeatMax=10
+        self.serialSendRepeatCount=0
+        self.ansBuffer=""
         self._parent=parent
         self.portLabel=wx.StaticText(self,label="Port:",pos=(5,32))
         self.portList=["1","2","3","4","5","6","7","8","9"]
@@ -150,9 +125,6 @@ class myPanel(wx.Panel):
 
         self.grid=RegisterGrid(self,pos=(160,10),size=(430,430))
         self.grid.Bind(wxGrid.EVT_GRID_CMD_SELECT_CELL,self.gridOnCellLeftClick)
-        self.hasGridQuery=0
-        self.ackOK=0
-        self.gridQueryAck=""
         self.page=self.RegPageComboBox.GetValue()
         self.registerIndex=self.grid.labelList[self.grid.lastClickRow]+self.grid.labelList[self.grid.lastClickCol]
 
@@ -201,6 +173,8 @@ class myPanel(wx.Panel):
             # interCharTimeout=None
             self.serial.port=str(self.serialPortComboBox.GetValue())
             self.serial.baudrate=self.serialBaudComboBox.GetValue()
+            self.serial.timeout=0.1
+            self.writeTimeout=0.1
             try:
                 self.serial.open()
             except serial.SerialException, e:
@@ -213,22 +187,39 @@ class myPanel(wx.Panel):
                 if self.thread != None:
                     self.StopThread()
                 self.StartThread()
+                #print("Debug: thread started")
         else:
             if self.serial.isOpen():
-                self.serial.close()
                 self.serialControlButton.SetLabel("Open")
                 self._parent.SetTitle("TW8825(Serial Close)")
                 if self.thread != None:
                     self.StopThread()
 
+                self.serial.close()
+                self.cmdBufferPopIndex=0
+                self.cmdBufferPushIndex=0
+                self.cmdBuffer[0]=""
+                self.cmdBufferPopIndexLast=-1
+                self.cmdBufferPopIndexLastCount=0
+                self.ansBuffer=""
+                for i in range(0,self.cmdBufferLen):
+                    self.cmdBuffer[i]=''
+
 
     def OnSerialRead(self, event):
         """Handle input from the serial port."""
-        text = event.data.replace("\r\n","\n")
-        self.logger.AppendText(text)
+        text = event.data.replace("\r","")
         #text = ''.join([(c >= ' ') and c or '<%d>' % ord(c)  for c in text])
+        self.logger.AppendText(text)
+
         cmdStr=self.cmdBuffer[self.cmdBufferPopIndex]
         if cmdStr!='' and cmdStr[-1]=='-' :
+            if text[-1]!='\n':
+                self.ansBuffer +=text
+                return
+            else:
+                self.ansBuffer +=text
+
             if self.cmdBufferPopIndexLast != self.cmdBufferPopIndex:
                 self.cmdBufferPopIndexLast = self.cmdBufferPopIndex
             else:
@@ -237,103 +228,85 @@ class myPanel(wx.Panel):
                     self.logger.AppendText("Error:5 time no right answer,give up\n")
                     self.cmdBuffer[self.cmdBufferPopIndex]=''
                     self.cmdBufferPopIndex=(self.cmdBufferPopIndex+1)%self.cmdBufferLen
+                    self.cmdBufferPopIndexLastCount=0
 
+            text=self.ansBuffer
+            print("Debug: get ans: " + text)
             # check whether the answer is corresponding to the ask
             if cmdStr[0]=='w' and text[:5]=="W="+cmdStr[1:3]+" ":
                 self.cmdBuffer[self.cmdBufferPopIndex]=''
                 self.cmdBufferPopIndex = (self.cmdBufferPopIndex+1)%self.cmdBufferLen
-                if text[5]>='A' and text[5]<='F':
-                    row=ord(text[5])-ord('A')+10
+
+                if text[2]>='A' and text[2]<='F':
+                    row=ord(text[2])-ord('A')+10
                 else:
-                    row=int(text[5])
-                if text[6]>='A' and text[6]<='F':
-                    col=ord(text[6])-ord('A')+10
+                    row=int(text[2])
+                if text[3]>='A' and text[3]<='F':
+                    col=ord(text[3])-ord('A')+10
                 else:
-                    col=int(text[6])
+                    col=int(text[3])
                 self.grid.SetCellValue(row,col,text[5:7])
+                print("Debug: Cell: " + cmdStr[1:3] + "=" +text[5:7])
 
             elif cmdStr[0]=='r' and text[:5]=="R="+cmdStr[1:3]+" ":
                 self.cmdBuffer[self.cmdBufferPopIndex]=''
                 self.cmdBufferPopIndex = (self.cmdBufferPopIndex+1)%self.cmdBufferLen
-                if text[5]>='A' and text[5]<='F':
-                    row=ord(text[5])-ord('A')+10
+
+                if text[2]>='A' and text[2]<='F':
+                    row=ord(text[2])-ord('A')+10
                 else:
-                    row=int(text[5])
-                if text[6]>='A' and text[6]<='F':
-                    col=ord(text[6])-ord('A')+10
+                    row=int(text[2])
+                if text[3]>='A' and text[3]<='F':
+                    col=ord(text[3])-ord('A')+10
                 else:
-                    col=int(text[6])
+                    col=int(text[3])
                 self.grid.SetCellValue(row,col,text[5:7])
+                print("Debug: Cell: " + cmdStr[1:3] + "=" +text[5:7])
+
             else:
                 # let ComPortThread resend this cmd
-                self.cmdBuffer[self.cmdBufferPopIndex][-1]='\n'
-
-                '''
-        if self.hasGridQuery==1:
-            self.page=self.RegPageComboBox.GetValue()
-            self.registerIndex=self.grid.labelList[self.grid.lastClickRow]+self.grid.labelList[self.grid.lastClickCol]
-            self.gridQueryAck += text
-            tempstr=self.gridQueryAck
-            if tempstr[-1]!="\n":
-                pass
-            else:
-                print("Debug: tempstr=" + tempstr)
-                for ack in tempstr.strip('\n').split("\n"):
-                    print("Debug: ack: " + ack + "\n")
-                    # ack format: W=FF 02
-                    # ack format: R=00 01
-
-                    #print("Debug: ack vs format: " +"*" + ack + "*"+ "W=FF 0"+self.page+"*")
-                    if ack[:7] == "W=FF 0"+self.page:
-                        print("Debug: get FF\n")
-                        self.ackOK=1
-                        continue
-                    #print("Debug: ack vs format: " +"*" + ack[:5] + "*"+ "R="+self.registerIndex+" "+"*")
-                    if ack[:5] == "R="+self.registerIndex+" " and self.ackOK==1:
-                        print("Debug: get register value\n")
-                        self.grid.SetCellValue(self.grid.lastClickRow,self.grid.lastClickCol,ack[5:])
-                        self.ackOK=0
-                        self.hasGridQuery=0
-                        self.gridQueryAck=""
-                        break
-            if len(tempstr)>100:
-                self.hasGridQuery=0
-                self.gridQueryAck=""
-                self.ackOK=0
-                self.logger.AppendText("Error: grid ask data timeout")
-                self.grid.SetCellValue(self.grid.lastClickRow,self.grid.lastClickRow,"XX")
-                '''
+                self.cmdBuffer[self.cmdBufferPopIndex]=self.cmdBuffer[self.cmdBufferPopIndex][:-1]+'\n'
+                print("Debug: resend happend!")
+            self.ansBuffer=""
 
 
     def ComPortThread(self):
         """Thread that handles the incomming traffic. Does the basic input
            transformation (newlines) and generates an SerialRxEvent"""
+        print("Debug: ComPortThread() started")
         while self.alive.isSet():               #loop while alive event is true
             text = self.serial.read(1)          #read one, with timout
             if text:                            #check if not timeout
                 n = self.serial.inWaiting()     #look if there is more to read
                 if n:
                     text = text + self.serial.read(n) #get it
-                #newline transformation
-                #if self.settings.newline == NEWLINE_CR:
-                #    text = text.replace('\r', '\n')
-                #elif self.settings.newline == NEWLINE_LF:
-                #    pass
-                #elif self.settings.newline == NEWLINE_CRLF:
                     text = text.replace('\r\n', '\n')
                 event = SerialRxEvent(self.GetId(), text)
                 self.GetEventHandler().AddPendingEvent(event)
+
             # if cmdBuffer[][-1]='-',it means it has been send through serial
-            if self.cmdBuffer[self.cmdBufferPopIndex]!='' and self.cmdBuffer[self.cmdBufferPopIndex][-1]!='-':
-                self.serial.write(self.cmdBuffer[self.cmdBufferPopIndex])
-                self.cmdBuffer[self.cmdBufferPopIndex][-1]='-'
+            #print("ComPortThread: "+self.cmdBuffer[self.cmdBufferPopIndex]+"\n")
+            if self.cmdBuffer[self.cmdBufferPopIndex]!='':
+                if self.cmdBuffer[self.cmdBufferPopIndex][-1]=='\n':
+                    print("ComPortThread: send cmd "+ self.cmdBuffer[self.cmdBufferPopIndex]+"\r\n")
+                    self.serial.write(self.cmdBuffer[self.cmdBufferPopIndex])
+                    self.cmdBuffer[self.cmdBufferPopIndex]=self.cmdBuffer[self.cmdBufferPopIndex][:-1]+'-'
+                    print("ComPortThread: after send cmd "+ self.cmdBuffer[self.cmdBufferPopIndex]+"*\r\n")
+                    self.serialSendRepeatCount =0
+                elif self.cmdBuffer[self.cmdBufferPopIndex][-1]=='-':
+                    self.serialSendRepeatCount +=1
+                    if self.serialSendRepeatCount>=self.serialSendRepeatMax:
+                        print("max waiting reach")
+                        self.cmdBuffer[self.cmdBufferPopIndex]=self.cmdBuffer[self.cmdBufferPopIndex][:-1]+'\n'
+                        self.serialSendRepeatCount =0
+
 
     def StartThread(self):
         """Start the receiver thread"""        
         self.thread = threading.Thread(target=self.ComPortThread)
         self.thread.setDaemon(1)
-        self.alive.set()
         self.thread.start()
+        self.alive.set()
 
     def StopThread(self):
         """Stop the receiver thread, wait util it's finished."""
@@ -344,7 +317,23 @@ class myPanel(wx.Panel):
             self.thread = None
 
     def readOnePage(self,evt):
-        pass
+        if self.serialControlButton.GetLabel()=="Close":
+            self.page=self.RegPageComboBox.GetValue()
+            self.cmdBuffer[self.cmdBufferPushIndex]="wFF0"+self.page+"\r\n"
+            self.cmdBufferPushIndex=(self.cmdBufferPushIndex+1)%self.cmdBufferLen
+            for i in range(0,255):
+                regstr=hex(i)[2:].upper()
+                if i<16:
+                    regstr='0'+regstr
+                if self.cmdBuffer[self.cmdBufferPushIndex] != "":
+                    print("Error: cmdBuffer override happend")
+                self.cmdBuffer[self.cmdBufferPushIndex]="r"+regstr+"\r\n"
+                #print("Debug: " + self.cmdBuffer[self.cmdBufferPushIndex] + str(self.cmdBufferPushIndex))
+                self.cmdBufferPushIndex=(self.cmdBufferPushIndex+1)%self.cmdBufferLen
+        evt.Skip()
+
+
+
     def logClear(self,evt):
         self.logger.Clear()
         evt.Skip()
@@ -352,7 +341,7 @@ class myPanel(wx.Panel):
         if self.serialControlButton.GetLabel()=="Close":
             for cmd in self.cmdBuffer:
                 if cmd!='':
-                    self.logger.AppendText("cmd Buffer is not emptey")
+                    self.logger.AppendText("cmd Buffer is not empty: " + cmd)
                     return
             cmdstring=self.cmdBufferBox.GetValue().replace('\n',"\r\n")
             self.serial.write(cmdstring)
@@ -378,13 +367,6 @@ class myPanel(wx.Panel):
 
             #self.logger.AppendText("grid Send: \n" +cmdStr)
             #self.serial.write(cmdStr)
-            '''
-            if self.hasGridQuery ==0:
-                self.hasGridQuery=1
-            else:
-                self.logger.AppendText("Error: last click no ack")
-                self.gridQueryAck=""
-    '''
         evt.Skip()
 
     def writeRegister(self,regStr,value):
@@ -405,6 +387,8 @@ class myPanel(wx.Panel):
                 if len(origContent)==1 and self.serialControlButton.GetLabel()=="Close":
                     regstr=self.grid.labelList[self.grid.lastClickRow]+self.grid.labelList[self.grid.lastClickCol]
                     val=self.grid.GetCellValue(self.grid.lastClickRow,self.grid.lastClickCol)
+                    self.cmdBuffer[self.cmdBufferPushIndex]="wFF0"+self.RegPageComboBox.GetValue()+"\r\n"
+                    self.cmdBufferPushIndex=(self.cmdBufferPushIndex+1)%self.cmdBufferLen
                     self.cmdBuffer[self.cmdBufferPushIndex]="w"+regstr+val+"\r\n"
                     self.cmdBufferPushIndex=(self.cmdBufferPushIndex+1)%self.cmdBufferLen
                     #self.writeRegister(regstr,val)
@@ -439,7 +423,7 @@ class myPanel(wx.Panel):
 
 class myFrame(wx.Frame):
     def __init__(self):
-        wx.Frame.__init__(self, None,title="TW8825 Register Configure Tool", size=(800, 600))
+        wx.Frame.__init__(self, None,title="TW8825 Register Configure Tool", size=(800, 650))
         ser=serial.Serial()
         self.panel = myPanel(self,ser)
         self.panel.Bind(wx.EVT_MOTION, self.OnMove)
