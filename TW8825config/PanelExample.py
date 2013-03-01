@@ -440,7 +440,7 @@ def getAvailablePorts():
     if os.name == 'nt':
         import scanwin32
         portsList=[]
-        for order,port,desc,hwid in sorted(scanwin32.comports()):
+        for order,port,desc,hwid in sorted(scanwin32.comports(False)):
             portsList.append(str(port))
         return portsList
         
