@@ -438,11 +438,28 @@ def getAvailablePorts():
         portsList= glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*')
         return portsList
     if os.name == 'nt':
+        """
         import scanwin32
         portsList=[]
         for order,port,desc,hwid in sorted(scanwin32.comports(False)):
             portsList.append(str(port))
         return portsList
+        """
+        import _winreg
+        mainkey=_winreg.HKEY_LOCAL_MACHINE
+        subkey=r'HARDWARE\DEVICEMAP\SERIALCOMM'
+        serialkey=_winreg.OpenKey(mainkey,subkey,0,_winreg.KEY_READ)
+        portsList=[]
+        try:
+            i=0
+            while True:
+                value=_winreg.EnumValue(serialkey,i)
+                portsList.append(str(value[1]))
+                i+=1
+        except WindowsError:
+            pass
+        return portsList
+
         
 if __name__ == "__main__":
     app=wx.App(False)
