@@ -1,0 +1,74 @@
+#this section is for kc_process.py script
+[warehouse]
+#The column of warehouse name,current is 'A'~'Z' only
+warehousecol=C
+#The start row of the content,it is the row number start from 1
+startrow=2
+#The names of unwanted/wanted warehouse,if both existing,then use the wantedlist.
+#so uncomment the one you want to use
+#unwantedlist=WHDI,WXC1
+wantedlist=ZC,GZC,CPC,BCPC
+
+[createerpbom]
+dbfiledir=/home/cylinc/
+#below is original bom config
+#the start row of content
+#the content should be like this:
+#item/asmlayer	partnumber	part/asm_description	quantity	references	remark
+startrow=7
+item_col=A
+pn_col=B
+des_col=D
+quantity_col=E
+ref_col=F
+remark_col=G
+assemblyprefix=asm
+
+
+#erp bom config
+erpbomsheetname=bom
+headtitle=物料清单编号 说明 部门名称 版本号 主备注 BOM类型 锁定 审批 自定义项1 自定义项2 自定义项3 项目编号 组件物料号 说明 分子 分母 损耗率% 仓库帐号 备注 物料属性 位号 生效日期 失效日期 组件自定义1 组件自定义2 组件自定义3 替代原则 替代物料编码1 替代用量1 替代序号1 位号1 备注1 替代物料编码2 替代用量2 替代序号2 位号2 备注2 替代物料编码3 替代用量3 替代序号3 位号3 备注3
+#FieldNo=FieldType,Content
+#FieldNo=String
+#FieldType: 
+#   asm_pn: the pn of asm componet
+#   asm_description: the description of asm_pn
+#   pn: the pn of the material in the asm component
+#   pn_description: the description of pn
+#   formula: the column is formula(there are some bugs)
+#   count: this colum is item column,parameters are: start number,step number
+#   quantity_numerator: the numerator of quantity
+#   quantity_denominator: the denominator of quantity
+Field1=asm_pn
+Field2=asm_description
+Field3=开发部
+Field4=V1.0
+Field6=o-外协BOM
+Field12=count,1,5
+Field13=pn
+Field14=pn_description
+Field15=quantity_numerator
+Field16=quantity_denominator
+Field18=formula,VLOOKUP(M2,'file:///home/cylinc/Codes/python/libreoffice/data/KC_ALL.xls'#$Sheet1.A2:I1048576,3,0)
+Field19=remark_col
+Field20=M-自备物料
+Field21=ref_col
+#currently,starttime will be today,and offtime will be ten years later
+Field22=starttime
+Field23=offtime
+
+#layer_col=0
+#layer_des_col=1
+#item_col=11
+#pn_col=12
+#pn_des_col=13
+#quantity_col=14
+#quantity2_col=15
+#warehouse_col=17
+#remark_col=18
+#ref_col=20
+#startrow=0
+
+[checkerpbom]
+
+
