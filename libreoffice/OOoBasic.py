@@ -37,7 +37,7 @@ from com.sun.star.sheet.CellDeleteMode import ROWS
 def GetOooDesktop():
     local=uno.getComponentContext()
     resolver=local.ServiceManager.createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver",local)
-    context=resolver.resolve("uno:socket,host=localhost,port=8100;urp;StarOffice.ComponentContext")
+    context=resolver.resolve("uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext")
     Desktop=context.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop",context)
     doc=Desktop.getCurrentComponent()
     return doc

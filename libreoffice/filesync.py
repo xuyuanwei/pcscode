@@ -11,7 +11,7 @@ global linux
 linux=1
 if linux:
 	sourcedir="./"
-	targetdir="/home/cylinc/.libreoffice/3/user/Scripts/python/"
+	targetdir="/home/cylinc/.config/libreoffice/3/user/Scripts/python/"
 else:
 	sourcedir=".\\"
 	#targetdir="C:\\Program Files\\LibreOffice 3.4\\Basis\\share\\Scripts\\python\\myscript\\"

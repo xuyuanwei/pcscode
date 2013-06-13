@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import fileinput
 def readvarible(configfilename,sectionname):
@@ -81,7 +82,7 @@ def resisterDescriptionStandardlize(ResString):
             break
     #to prevent decal like "R0603",where 'R' is also a unit flag
     #if it is,then strip it from inputstr
-    if position>=1 and inputstr[position-1]=='R'
+    if position>=1 and inputstr[position-1]=='R':
         inputstr=inputstr[:position-1] + inputstr[position+4:]
 
     #check unit and get value
@@ -175,7 +176,7 @@ def CapDescriptionStandardlize(CapString):
     #TODO:2.2F like is not supported
     dotPosition=valueStr.find('.')
     if dotPosition!=-1:
-        if unitStr='N':
+        if unitStr=='N':
             valueStr=str(float(valueStr[:-1])*1000)
             len1=len(valueStr)
             valueTemp=valueStr.rstrip('0')
@@ -189,7 +190,7 @@ def CapDescriptionStandardlize(CapString):
             len2=len(valueTemp)
             valueStr=valueTemp+str(len1-len2)+'P'
 
-        if unitStr=='μ'
+        if unitStr=='μ':
             valueStr=str(float(valueStr[:-2])*1000000)
             len1=len(valueStr)
             valueTemp=valueStr.rstrip('0')
@@ -213,7 +214,7 @@ def CapDescriptionStandardlize(CapString):
     #check for precision
     precision=""
     for word in precision_keyword:
-        if inputstr.find(word)
+        if inputstr.find(word):
             precision=word
             break
     #check for voltage
@@ -230,9 +231,9 @@ def CapDescriptionStandardlize(CapString):
 
 def standardlizeDescription(materialDescription):
     if materialDescription.find("电阻"):
-        return resisterDescriptionStandardlize(ResString):
-    if materialDescription.find("电阻"):
-        return CapDescriptionStandardlize(CapString):
+        return resisterDescriptionStandardlize(materialDescription)
+    if materialDescription.find("电容"):
+        return CapDescriptionStandardlize(materialDescription)
     return materialDescription
 
 
