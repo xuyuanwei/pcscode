@@ -23,6 +23,13 @@ def GetOooDesktop():
     doc=Desktop.getCurrentComponent()
     return doc
 
+def GetOooDesktop_():
+    local=uno.getComponentContext()
+    resolver=local.ServiceManager.createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver",local)
+    context=resolver.resolve("uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext")
+    Desktop=context.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop",context)
+    return Desktop
+
 def resisterDescriptionStandardlize(ResString):
     type_keyword=["电阻"]
     decal_keyword=["0603","0805","1206"]
@@ -88,7 +95,7 @@ def resisterDescriptionStandardlize(ResString):
     dotPosition=valueStr.find('.')
     #hope it fully meet the value format as 3.3K
     if dotPosition!=-1 and valueStr[-1]==inputstr[position]:
-        valueStr=valueStr[0:dotPosition]+inputstr[position]+valueStr[dotPosition+1:]
+        valueStr=valueStr[0:dotPosition]+inputstr[position]+valueStr[dotPosition+1:-1]
 
     #check mounttype
     mountType=""
@@ -155,7 +162,8 @@ def CapDescriptionStandardlize(CapString):
         valueStr=valueStr[:2]+'0'+'P' 
 
     if unitStr=='P' and digitalLen==3 and valueStr[2]=='0':
-        valueStr+="(Waring)"
+        pass
+        #valueStr+="(Waring)"
 
     #change 2.2N like to be 222P
     #there are so many probability to express a cap value,like 2.2N,220N,0.47U
@@ -242,13 +250,13 @@ def standardlizeDescription(materialDescription):
 def standardlize():
     #sheet=GetOooDesktop().getSheets().getByName("库存")
     sheet=GetOooDesktop().getCurrentController().getActiveSheet()
-    column=1
+    column=2
     for i in range(1,200):
         cellstr= sheet.getCellByPosition(column,i).getString().encode('utf-8')
         print("get str: " + cellstr)
         newstr=standardlizeDescription(cellstr)
         print("new str: " + newstr)
-        sheet.getCellByPosition(column+1,i).setString(newstr) 
+        sheet.getCellByPosition(column-1,i).setString(newstr) 
 
 def findmatch(string,strlist):
     listLen=len(strlist)
@@ -266,21 +274,31 @@ def findmatch(string,strlist):
 
 
 def fetchPNTable():
-    sheetname="库存"
+    """
+    fetch pn and corresponding description from pointed sheet table,
+    store the data in the global varibles
+    """
+    #TODO: make a config file to save the configure
+    sheetname="物料编码"
     pnCol=0
     DescCol=1
-    startRow=2
+    startRow=1
     endRow=200
 
     global pnList
     global descList
     pnList=[]
     descList=[]
+    #TODO: open the file in the background
     sheet=GetOooDesktop().getSheets().getByName(sheetname)
     for r in range(startRow,endRow):
-        description=sheet.getCellByPosition(DescCol,r).getString().strip().upper().encode('utf-8')
+        # no string.upper(),or the unit 'μ' will changed to be 'M',geek
+        description=sheet.getCellByPosition(DescCol,r).getString().strip().encode('utf-8')
+        #sheet.getCellByPosition(DescCol+1,r).setString(description) #debug
         if description!="":
-            descList.append(standardlizeDescription(description))
+            newDescription=standardlizeDescription(description)
+            descList.append(newDescription)
+            #sheet.getCellByPosition(DescCol+2,r).setString(newDescription) #debug
             pnList.append(sheet.getCellByPosition(pnCol,r).getString())
     return
 
@@ -288,7 +306,7 @@ def fetchPNTable():
 def getMatchPn():
     descriptionCol=2
     startRow=1
-    endRow=93
+    endRow=170
     pnCol=0
     sheet=GetOooDesktop().getCurrentController().getActiveSheet()
 
@@ -298,7 +316,7 @@ def getMatchPn():
     global pnList
 
     for r in range(startRow,endRow):
-        desc=sheet.getCellByPosition(descriptionCol,r).getString().strip().upper().encode('utf-8')
+        desc=sheet.getCellByPosition(descriptionCol,r).getString().strip().encode('utf-8')
         result=findmatch(standardlizeDescription(desc),descList)
         if result[0]!=-1:
             sheet.getCellByPosition(pnCol,r).setString(pnList[result[0]])
@@ -308,6 +326,10 @@ def getMatchPn():
             sheet.getCellByPosition(pnCol+1,r).setValue(result[1])
 
 
+def test():
+    sheet=GetOooDesktop_().getComponents().getSheets().getByName("库存")
+    description=sheet.getCellByPosition(DescCol,r).getString().strip().encode('utf-8')
 
-g_exportedScripts=standardlize,getMatchPn
+
+g_exportedScripts=standardlize,getMatchPn,fetchPNTable,
 
