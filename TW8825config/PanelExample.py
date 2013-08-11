@@ -146,6 +146,8 @@ class myPanel(wx.Panel):
 
         self.sendCountLabel=wx.StaticText(self,label="lines",pos=(660,565))
         self.sendCountList=["0","5","10"]
+        self.sendCountIndex=-1
+        self.sendCountCMDBuffer=[]
         self.sendCountComboBox=wx.ComboBox(self,value="0",pos=(600,560),size=(60,25),choices=self.sendCountList,style=wx.CB_DROPDOWN)
     # update the ports info in the serialPortComboBox
     def updateAvailablePorts(self,portsList):
@@ -343,8 +345,30 @@ class myPanel(wx.Panel):
                 if cmd!='':
                     self.logger.AppendText("cmd Buffer is not empty: " + cmd)
                     return
-            cmdstring=self.cmdBufferBox.GetValue().replace('\n',"\r\n")
-            self.serial.write(cmdstring)
+            sendCountValue=int(self.sendCountComboBox.GetValue())
+            if sendCountValue==0:
+                cmdstring=self.cmdBufferBox.GetValue()
+                cmdstring=cmdstring.replace('\n',"\r\n")
+                self.serial.write(cmdstring)
+            if sendCountValue>0:
+                if self.sendCountIndex==-1:
+                    cmdstring=self.cmdBufferBox.GetValue()
+                    self.sendCountIndex=0
+                    self.sendCountCMDBuffer=cmdstring.split('\n')
+                    self.cmdBufferBox.Clear()
+                if self.sendCountIndex>=0:
+                    self.cmdBufferBox.Clear()
+                    #self.cmdBufferBox.AppendText("Current send:\n")
+                    cmdstring=""
+                    for i in range(self.sendCountIndex,min(self.sendCountIndex+sendCountValue,len(self.sendCountCMDBuffer))):
+                        self.cmdBufferBox.AppendText(self.sendCountCMDBuffer[i]+'\n')
+                        cmdstring=self.sendCountCMDBuffer[i]+"\r\n"
+                    if cmdstring=="":
+                        self.cmdBufferBox.AppendText("End")
+                        sendCountValue=self.sendCountComboBox.SetValue('0')
+                    else:
+                        self.serial.write(cmdstring)
+                        self.sendCountIndex+=sendCountValue
 
 
     def gridOnCellLeftClick(self,evt):
