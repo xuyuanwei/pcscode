@@ -362,10 +362,12 @@ class myPanel(wx.Panel):
                     cmdstring=""
                     for i in range(self.sendCountIndex,min(self.sendCountIndex+sendCountValue,len(self.sendCountCMDBuffer))):
                         self.cmdBufferBox.AppendText(self.sendCountCMDBuffer[i]+'\n')
-                        cmdstring=self.sendCountCMDBuffer[i]+"\r\n"
+                        cmdstring=cmdstring+self.sendCountCMDBuffer[i]+"\r\n"
+                        #print("cmdstring: "+cmdstring)
                     if cmdstring=="":
                         self.cmdBufferBox.AppendText("End")
                         sendCountValue=self.sendCountComboBox.SetValue('0')
+                        self.sendCountIndex=-1
                     else:
                         self.serial.write(cmdstring)
                         self.sendCountIndex+=sendCountValue
