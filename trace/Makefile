@@ -1,4 +1,4 @@
-GCC=cpp
+GCC=gcc
 
 # get from pkgconfig --cflags --libs opencv
 INCLUDEFLAG=-I/usr/include/opencv
