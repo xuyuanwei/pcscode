@@ -1,22 +1,21 @@
 #!/usr/bin/octave
-a=85/180*pi;    # camera view angle
-b=20/180*pi;    # angle between camera center line and horizon line
-h=1;            # camera hight from ground
-hscreen=0.1;    # screen hight
-wscreen=0.2;    # screen width
 l=2.87;         # car wheelbase(轴距)
-w=1.56;         # car front/rear wheel distance(前/后轮距)
-d=1.03;         # distance between rear wheel to back of car
+w=1.56+0.12*2;  # car front/rear wheel distance(前/后轮距)(0.12m 道可视instruction)
+#d=1.03+0.3;     # distance between rear wheel to back of car(0.3m 道可视instruction)
+d=1.03;     # distance between rear wheel to back of car(0.3m 道可视instruction)
 phi=10/180*pi;  # the angle between front wheelbase and horizon line
 
+ratio=100;
+l=l*ratio;
+w=w*ratio;
+d=d*ratio;
 
 #   draw cricle reference:
 #   http://stackoverflow.com/questions/7971467/how-to-draw-a-circle
 
-
 for i=1:9
     R_middle_point=l*cot(phi);
-    t=linspace(0,pi,100);
+    t=linspace(0,pi,180);        # full circle
     Xoffset=R_middle_point;
     Yoffset=d;
 # big round
@@ -32,12 +31,34 @@ for i=1:9
     step=5;
 
     phi=i*step/180*pi;
+    axis([-1.5*ratio,1.5*ratio,d,d+3*ratio],"equal");
     plot(X_big_round,Y_big_round,"r",'LineWidth',5);
     hold on
+    axis([-1.5*ratio,1.5*ratio,d,d+3*ratio],"equal");
     plot(X_small_round,Y_small_round,"r",'LineWidth',5);
-    hold on
+    hold off
     filename=strcat("track",num2str(i*step),".jpg");
     #print -dpdf track.pdf
-    print(filename,"-djpg")
+    #print(filename,"-djpg","-S800,480")
+    print(filename,"-djpg","-landscape")
 end
 
+axis([-1.5*ratio,1.5*ratio,d,d+3*ratio],"equal");
+plot([-w/2;w/2],[d+0.3*ratio;d+0.3*ratio],"r",'LineWidth',5);
+hold on
+axis([-1.5*ratio,1.5*ratio,d,d+3*ratio],"equal");
+plot([-w/2;w/2],[d+0.6*ratio;d+0.6*ratio],"r",'LineWidth',5);
+hold on
+axis([-1.5*ratio,1.5*ratio,d,d+3*ratio],"equal");
+plot([-w/2;w/2],[d+1*ratio;d+1*ratio],"r",'LineWidth',5);
+hold on
+axis([-1.5*ratio,1.5*ratio,d,d+3*ratio],"equal");
+plot([-w/2;w/2],[d+2*ratio;d+2*ratio],"r",'LineWidth',5);
+hold on
+axis([-1.5*ratio,1.5*ratio,d,d+3*ratio],"equal");
+plot([-w/2;w/2],[d+3*ratio;d+3*ratio],"r",'LineWidth',5);
+hold on
+axis([-1.5*ratio,1.5*ratio,d,d+3*ratio],"equal");
+plot([0*ratio;0*ratio],[d;d+3*ratio],"r",'LineWidth',5);
+hold off
+print("track0.jpg","-djpg","-landscape")
