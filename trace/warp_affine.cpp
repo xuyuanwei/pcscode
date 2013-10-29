@@ -6,6 +6,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
 #include <stdio.h>
+#include <string.h>
 
 using namespace cv;
 using namespace std;
@@ -40,6 +41,11 @@ int main( int argc, char** argv )
         cout << "imread fail"<<endl;
         return -1;
     }
+
+    cout<<"image.col:"<<src.cols<<endl;
+    cout<<"image.row:"<<src.rows<<endl;
+    src=src(Rect(116,230,815,928));
+
 
     /// 设置目标图像的大小和类型与源图像一致
     warp_dst = Mat::zeros( src.rows, src.cols, src.type() );
@@ -101,9 +107,10 @@ int main( int argc, char** argv )
     //cout << perspective_mat <<endl;
     warpPerspective(src,perspective_dst,perspective_mat,perspective_dst.size());
 
-    imwrite("output.bmp",perspective_dst);
-    namedWindow( warp_window, CV_WINDOW_AUTOSIZE );
-    imshow( perspective_window, perspective_dst);
+
+    imwrite(strcat(argv[1],".bmp"),perspective_dst);
+    //namedWindow( warp_window, CV_WINDOW_AUTOSIZE );
+    //imshow( perspective_window, perspective_dst);
 
     /* create offset */
     /*
