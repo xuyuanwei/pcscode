@@ -18,44 +18,46 @@ rightDistance=1.5*ratio;
 Length=3*ratio;
 linewidth=10;
 
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-rectangle('Position',[-w/2,d+0.3*ratio,w,0.3*ratio],'FaceColor',[0.21,0.35,0.97]);
+axis([leftDistance,rightDistance,0,0+Length],"equal");
+rectangle('Position',[-w/2,0.3*ratio,w,0.3*ratio],'FaceColor',[0.21,0.35,0.97]);
 hold on
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-rectangle('Position',[-w/2,d+0.6*ratio,w,0.4*ratio],'FaceColor',[0.47,0.56,0.98]);
+axis([leftDistance,rightDistance,0,0+Length],"equal");
+rectangle('Position',[-w/2,0.6*ratio,w,0.4*ratio],'FaceColor',[0.47,0.56,0.98]);
 hold on
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-rectangle('Position',[-w/2,d+1*ratio,w,1*ratio],'FaceColor',[0.21,0.35,0.97]);
+axis([leftDistance,rightDistance,0,0+Length],"equal");
+rectangle('Position',[-w/2,1*ratio,w,1*ratio],'FaceColor',[0.21,0.35,0.97]);
 hold on
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-rectangle('Position',[-w/2,d+2*ratio,w,1*ratio],'FaceColor',[0.47,0.56,0.98]);
+axis([leftDistance,rightDistance,0,0+Length],"equal");
+rectangle('Position',[-w/2,2*ratio,w,1*ratio],'FaceColor',[0.47,0.56,0.98]);
 hold off
 
 print("./source/track0.jpg","-djpg","-landscape")
 
 
-for i=1:14
+for i=1:13
     step=5;
     phi=i*step/180*pi;
     R_middle_point=l*cot(phi);
-    t=linspace(0,pi,180);        # half circle
+    #t=linspace(0,pi,180);        # half circle
     Xoffset=R_middle_point;
     Yoffset=d;
 # big round
     R_big_round=R_middle_point+w/2;
+    t=linspace(asin(-Yoffset/R_big_round),pi+asin(Yoffset/R_big_round),180);
     X_big_round=R_big_round*cos(t)+Xoffset;
     Y_big_round=R_big_round*sin(t)+Yoffset;
 
 # small round
     R_small_round=R_middle_point-w/2;
+    t=linspace(asin(-Yoffset/R_small_round),pi+asin(Yoffset/R_small_round),180);
     X_small_round=R_small_round*cos(t)+Xoffset;
     Y_small_round=R_small_round*sin(t)+Yoffset;
 
 
-    axis([leftDistance,rightDistance,d,d+Length],"equal");
+    axis([leftDistance,rightDistance,0,d+Length],"equal");
     plot(X_big_round,Y_big_round,'Color',[1,0.56,0.02],'LineWidth',linewidth);
     hold on
-    axis([leftDistance,rightDistance,d,d+Length],"equal");
+    axis([leftDistance,rightDistance,0,d+Length],"equal");
     plot(X_small_round,Y_small_round,'Color',[1,0.56,0.02],'LineWidth',linewidth);
     hold off
     filename=strcat("./source/track",num2str(i*step),".jpg");

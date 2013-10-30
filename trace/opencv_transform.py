@@ -11,10 +11,10 @@ sourceFileDir="./source/"
 def get_perspective_mat():
     # [x,y]
     source_4points=numpy.array([
-        [ 140,628 ], 
-        [ 558,628 ],
-        [ 140,1  ], 
-        [ 558,1  ]
+        [ 140,629 ], 
+        [ 559,629 ],
+        [ 140,0  ], 
+        [ 559,0  ]
         ],
         numpy.float32)
     x_offset=350
@@ -41,6 +41,7 @@ if __name__ == '__main__':
         crop_starty=230
         crop_endx= 815
         crop_endy= 928
+
         # crop rectangle [y_min:y_max,x_min:x_max]
         img=img[crop_starty:crop_endy,crop_startx:crop_endx]
         #cv2.imwrite("crop.bmp",img)
