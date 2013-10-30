@@ -42,9 +42,8 @@ int main( int argc, char** argv )
         return -1;
     }
 
-    cout<<"image.col:"<<src.cols<<endl;
-    cout<<"image.row:"<<src.rows<<endl;
-    src=src(Rect(116,230,815,928));
+    //cout<<"image.col:"<<src.cols<<endl;
+    //cout<<"image.row:"<<src.rows<<endl;
 
 
     /// 设置目标图像的大小和类型与源图像一致
@@ -104,11 +103,11 @@ int main( int argc, char** argv )
 
     /* TODO: try findHomography function */
     perspective_mat=getPerspectiveTransform(srcTri_perspective,dstTri_perspective);
-    //cout << perspective_mat <<endl;
+    cout << perspective_mat <<endl;
     warpPerspective(src,perspective_dst,perspective_mat,perspective_dst.size());
 
 
-    imwrite(strcat(argv[1],".bmp"),perspective_dst);
+    imwrite(strcat(argv[1],"transformed.bmp"),perspective_dst);
     //namedWindow( warp_window, CV_WINDOW_AUTOSIZE );
     //imshow( perspective_window, perspective_dst);
 

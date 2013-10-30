@@ -18,7 +18,23 @@ rightDistance=1.5*ratio;
 Length=3*ratio;
 linewidth=10;
 
-for i=1:17
+axis([leftDistance,rightDistance,d,d+Length],"equal");
+rectangle('Position',[-w/2,d+0.3*ratio,w,0.3*ratio],'FaceColor',[0.21,0.35,0.97]);
+hold on
+axis([leftDistance,rightDistance,d,d+Length],"equal");
+rectangle('Position',[-w/2,d+0.6*ratio,w,0.4*ratio],'FaceColor',[0.47,0.56,0.98]);
+hold on
+axis([leftDistance,rightDistance,d,d+Length],"equal");
+rectangle('Position',[-w/2,d+1*ratio,w,1*ratio],'FaceColor',[0.21,0.35,0.97]);
+hold on
+axis([leftDistance,rightDistance,d,d+Length],"equal");
+rectangle('Position',[-w/2,d+2*ratio,w,1*ratio],'FaceColor',[0.47,0.56,0.98]);
+hold off
+
+print("./source/track0.jpg","-djpg","-landscape")
+
+
+for i=1:14
     step=5;
     phi=i*step/180*pi;
     R_middle_point=l*cot(phi);
@@ -37,10 +53,10 @@ for i=1:17
 
 
     axis([leftDistance,rightDistance,d,d+Length],"equal");
-    plot(X_big_round,Y_big_round,"r",'LineWidth',linewidth);
+    plot(X_big_round,Y_big_round,'Color',[1,0.56,0.02],'LineWidth',linewidth);
     hold on
     axis([leftDistance,rightDistance,d,d+Length],"equal");
-    plot(X_small_round,Y_small_round,"r",'LineWidth',linewidth);
+    plot(X_small_round,Y_small_round,'Color',[1,0.56,0.02],'LineWidth',linewidth);
     hold off
     filename=strcat("./source/track",num2str(i*step),".jpg");
     #print -dpdf track.pdf
@@ -48,22 +64,24 @@ for i=1:17
     print(filename,"-djpg","-landscape")
 end
 
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-plot([-w/2;w/2],[d+0.3*ratio;d+0.3*ratio],"r",'LineWidth',linewidth);
-hold on
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-plot([-w/2;w/2],[d+0.6*ratio;d+0.6*ratio],"r",'LineWidth',linewidth);
-hold on
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-plot([-w/2;w/2],[d+1*ratio;d+1*ratio],"r",'LineWidth',linewidth);
-hold on
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-plot([-w/2;w/2],[d+2*ratio;d+2*ratio],"r",'LineWidth',linewidth);
-hold on
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-plot([-w/2;w/2],[d+3*ratio;d+3*ratio],"r",'LineWidth',linewidth);
-hold on
-axis([leftDistance,rightDistance,d,d+Length],"equal");
-plot([0*ratio;0*ratio],[d;d+Length],"r",'LineWidth',linewidth);
-hold off
-print("./source/track0.jpg","-djpg","-landscape")
+clf     #clear plot buffer
+
+#axis([leftDistance,rightDistance,d,d+Length],"equal");
+#plot([-w/2;w/2],[d+0.3*ratio;d+0.3*ratio],"r",'LineWidth',linewidth);
+#hold on
+#axis([leftDistance,rightDistance,d,d+Length],"equal");
+#plot([-w/2;w/2],[d+0.6*ratio;d+0.6*ratio],"r",'LineWidth',linewidth);
+#hold on
+#axis([leftDistance,rightDistance,d,d+Length],"equal");
+#plot([-w/2;w/2],[d+1*ratio;d+1*ratio],"r",'LineWidth',linewidth);
+#hold on
+#axis([leftDistance,rightDistance,d,d+Length],"equal");
+#plot([-w/2;w/2],[d+2*ratio;d+2*ratio],"r",'LineWidth',linewidth);
+#hold on
+#axis([leftDistance,rightDistance,d,d+Length],"equal");
+#plot([-w/2;w/2],[d+3*ratio;d+3*ratio],"r",'LineWidth',linewidth);
+#hold on
+#axis([leftDistance,rightDistance,d,d+Length],"equal");
+#plot([0*ratio;0*ratio],[d;d+Length],"r",'LineWidth',linewidth);
+#hold off
+

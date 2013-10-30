@@ -2,5 +2,5 @@
 for file in ./source/output*.bmp
 do
     echo $file
-    ./test.o $file
+    ./perspective_transform.o $file
 done
