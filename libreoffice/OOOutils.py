@@ -16,12 +16,11 @@ import time
 import atexit
 
 
-OPENOFFICE_PORT = 8100
+OPENOFFICE_PORT = 2002
 
 # Find OpenOffice.
 _oopaths=(
-        ('/usr/lib64/ooo-2.0/program',   '/usr/lib64/ooo-2.0/program'),
-        ('/opt/openoffice.org3/program', '/opt/openoffice.org/basis3.0/program'),
+        ('/usr/lib/libreoffice/program',   '/usr/lib/libreoffice/program'),
      )
 
 for p in _oopaths:

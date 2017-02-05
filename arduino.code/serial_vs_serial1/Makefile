@@ -8,7 +8,7 @@ INCULDE +=-I/usr/share/arduino/hardware/arduino/variants/mega
 
 COMMON_CPP_FLAGS=-c -g -Os -Wall -ffunction-sections -fdata-sections -mmcu=atmega2560 -DF_CPU=16000000L -MMD -DUSB_VID=null -DUSB_PID=null -DARDUINO=101  
 
-COMMON_OBJ_OUTPUT_DIR=/home/cylinc/Code/arduino/project/common
+COMMON_OBJ_OUTPUT_DIR=../common
 COMMON_SRC_DIR=/usr/share/arduino/hardware/arduino/cores/arduino/
 
 SOURCE_FILE_NAME=serial_vs_serial1.cpp
